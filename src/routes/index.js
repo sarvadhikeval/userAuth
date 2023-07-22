@@ -7,6 +7,10 @@ route.post('/register',userController.userRegister);
 
 route.post('/login', userController.userLogin);
 
-route.get('/user/:id',passport.authenticate('userAuthorization'),userController.userDelete);
+route.get('/user',passport.authenticate('userAuthorization',{session : false}),userController.userProfile);
+
+route.put('/update',passport.authenticate('userAuthorization',{session : false}),userController.userUpdate);
+
+route.delete('/delete',passport.authenticate('userAuthorization',{session :false}),userController.userDelete);
 
 export default route;

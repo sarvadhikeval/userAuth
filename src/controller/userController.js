@@ -33,36 +33,68 @@ export const userLogin = async (req, res, next) => {
         if (findUser && await compare(password, findUser.password)) {
             let { id, username, email } = findUser;
             var obj = { id, username, email }
-            var token = await jwt.sign(obj, process.env.JWT_SECRET,{expiresIn : 1800});
+            var token = await jwt.sign(obj, process.env.JWT_SECRET, { expiresIn: '30m' });
         }
         else {
-            console.log('not match')
+            throw new errHelper(errorTypes.not_found, 'User & password not match');
         }
-        const findToken = await Token.findOne({
+        let tokenStore = await Token.findOne({
             where: {
                 UserId: obj.id
             }
         });
-        var tokenStore = '';
-        if (findToken) {
-            tokenStore = findToken.token = token;
-            findToken.save();
+        if (tokenStore) {
+            tokenStore.token = token;
+            await tokenStore.save();
         } else {
-            tokenStore = await Token.create({ token: token, UserId: obj.id }, { returning: { token } });
+            tokenStore = await Token.create({ token, UserId: obj.id },{returning : true});
         }
-        return res.json({ token: tokenStore });
+        return SUCCESS(req, res, tokenStore.token);
     } catch (err) {
+        console.log(err)
         next(err);
+    }
+}
+
+export const userProfile = async (req, res, next) => {
+    try {
+        const {id} = req.user
+        const findUser = await User.findByPk(id);
+        if (findUser) return SUCCESS(req, res, req.user);
+        else throw new errHelper(errorTypes.not_found, 'User not found');
+    } catch (err) {
+        next(err)
+    }
+}
+
+export const userUpdate = async (req, res, next) => {
+    try {
+        const {id} = req.user
+        const findUser = await User.findByPk(id);
+        if (!findUser) throw new errHelper(errorTypes.not_found, 'User not found');
+        const updateData = await User.update(req.body, {
+            where: { id }
+        });
+
+        return SUCCESS(req, res, updateData)
+    } catch (err) {
+        return next(err);
     }
 }
 
 export const userDelete = async (req, res, next) => {
     try {
-        const id = req.params.id;
+        const {id,password} = req.user;
+
         const findUser = await User.findByPk(id);
-        if(findUser) return SUCCESS(req,res,findUser);
-        else throw new errHelper(errorTypes.not_found,'User not found');
+        if (!findUser) throw new errHelper(errorTypes.not_found, 'User not found');
+
+        const deleteData = await User.destroy({
+            where: { id }
+        });
+
+        return SUCCESS(req, res, deleteData);
     } catch (err) {
-        next(err)
+        return next(err)
     }
 }

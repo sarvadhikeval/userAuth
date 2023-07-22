@@ -16,6 +16,6 @@ const Token = sequelize.define('Token',{
     }
 });
 
-User.hasOne(Token);
+User.hasOne(Token,{onDelete : 'CASCADE'});
 
 export default Token;

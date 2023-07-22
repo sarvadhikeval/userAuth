@@ -34,10 +34,11 @@ const User = sequelize.define('User',{
         validate :{
             len :{
                 args : [7.14],
-                msg : 'Must be password as 7 & 14 char between'
+                msg : 'Password must be 7 & 14 char between'
             }
         }
     }
 });
+
 
 export default User;
